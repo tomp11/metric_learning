@@ -6,3 +6,6 @@ mnist
 mnist_280
 mnist_test
 venv
+n_pair_index.txt
+n_plus_1_index_text.txt
+image_path.txt
