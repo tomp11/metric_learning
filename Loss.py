@@ -11,29 +11,51 @@ class Angular_mc_loss(nn.Module):
             alpha = np.deg2rad(alpha)
         self.sq_tan_alpha = np.tan(alpha) ** 2
 
-    def forward(self, f, f_p):
-        # xp = cuda.get_array_module(f)
+    def forward(self, f, f_p, with_npair=True, lamb=2):
         n_pairs = len(f)
-        # print(f.size())
-        # first and second term of f_{a,p,n}
-        # 論文だと転置の方向が違うかも
-        # 結局logsumexpでaxis=1だから変わらんけどさ
         term1 = 4 * self.sq_tan_alpha * torch.matmul(f + f_p, torch.transpose(f_p, 0, 1))
         term2 = 2 * (1 + self.sq_tan_alpha) * torch.sum(f * f_p, keepdim=True, dim=1)
-        # term2 = 2 * (1 + sq_tan_alpha) * F.batch_matmul(f, f_p, transa=True).reshape(n_pairs, 1)
-
         f_apn = term1 - term2
-        # multiply zero to diagonal components of f_apn
-        # print(f_apn.type())
-        # print(n_pairs.type())
-        # print(f_apn.type())
-        # print(torch.ones_like(f_apn).type(), f_apn.type(), torch.eye(n_pairs, dtype=f_apn.type()).type())
         mask = torch.ones_like(f_apn) - torch.eye(n_pairs).cuda()
         f_apn = f_apn * mask
-        # print(f_apn)
+        loss = torch.mean(torch.logsumexp(f_apn, dim=1))
+        if with_npair:
+            loss_npair = n_pair_mc_loss(f, f_p)
+            loss = loss_npair + lamb*loss
+        # Preventing overflow
+        # with torch.no_grad():
+        #     t = torch.max(x, dim=2)[0] # (batch_size, 1)
+        # print(t.size())
+        #
+        # x = torch.exp(x - t.unsqueeze(dim=1))
+        # x = torch.log(torch.exp(-t) + torch.sum(x, 2))
+        # loss = torch.mean(t + x)
+        return loss
+
+    def n_pair_mc_loss(f, f_p):
+        n_pairs = len(f)
+        term1 = torch.matmul(f, torch.transpose(f_p, 0, 1))
+        term2 = torch.sum(f * f_p, keepdim=True, dim=1)
+        f_apn = term1 - term2
+        mask = torch.ones_like(f_apn) - torch.eye(n_pairs).cuda()
+        f_apn = f_apn * mask
         return torch.mean(torch.logsumexp(f_apn, dim=1))
 
-class my_AngularLoss(nn.Module):
+class n_pair_mc_loss(nn.Module):
+    def __init__(self):
+        super(n_pair_mc_loss, self).__init__()
+
+    def forward(self, f, f_p):
+        n_pairs = len(f)
+        term1 = torch.matmul(f, torch.transpose(f_p, 0, 1))
+        term2 = torch.sum(f * f_p, keepdim=True, dim=1)
+        f_apn = term1 - term2
+        mask = torch.ones_like(f_apn) - torch.eye(n_pairs).cuda()
+        f_apn = f_apn * mask
+        return torch.mean(torch.logsumexp(f_apn, dim=1))
+
+
+class N_plus_1_angularLoss(nn.Module):
     """
     Angular loss
     Wang, Jian. "Deep Metric Learning with Angular Loss," CVPR, 2017
@@ -98,7 +120,7 @@ class my_AngularLoss(nn.Module):
 
 
 
-class NPairLoss(nn.Module):
+class N_plus_1_Loss(nn.Module):
     """
     N-Pair loss
     Sohn, Kihyuk. "Improved Deep Metric Learning with Multi-class N-pair Loss Objective," Advances in Neural Information
