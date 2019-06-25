@@ -10,7 +10,6 @@ import os
 from Dataset import N_Pair_ImageDataset, N_plus_1_ImageDataset
 from Models import N_PAIR_net, N_plus_1_net
 from Loss import Angular_mc_loss, Angular_mc_loss, N_plus_1_Loss, n_pair_mc_loss
-from AlexNet import alexnet
 from git_losses import NPairAngularLoss
 import torchvision.models as models
 from Nets import Cnn_32

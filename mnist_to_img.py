@@ -8,7 +8,7 @@ def save(data, index, num):
     for i in range(28):
         for j in range(28):
             pix[i, j] = int(data[i+j*28]*256)
-    filename ="mnist_metiric/" + str(num) + "/test" + "{0:04d}".format(index) + ".png"
+    filename ="mnist/" + str(num) + "/test" + "{0:04d}".format(index) + ".png"
     img.save(filename)
     print(filename)
 
