@@ -30,7 +30,7 @@ def test():
         target.append(j)
         count+=1
         # print(i.size())
-        if count==1000:
+        if count==5000:
             break
     data = torch.stack(test_batch) # (1000,1,28,28)
     target = torch.Tensor(target) # (1000)
@@ -47,7 +47,7 @@ def test():
 
     net = Cnn_32()
     model = Test_net(net).to(device)
-    model.load_state_dict(torch.load('./checkpoints/checkpoint.pth.tar'))
+    model.load_state_dict(torch.load('./checkpoints/n_pair_angular_loss/checkpoint.pth.tar'))
     classes = ["0","1","2","3","4","5","6","7","8","9"]
 
 
@@ -116,7 +116,7 @@ def t_sne():
         target.append(j)
         count+=1
         # print(i.size())
-        if count==1000:
+        if count==5000:
             break
     data = torch.stack(test_batch) # (1000,1,28,28)
     target = torch.Tensor(target) # (1000)
@@ -131,11 +131,11 @@ def t_sne():
     latent_vecs, target = latent_vecs.to("cpu"), target.to("cpu")
     latent_vecs, target = latent_vecs.numpy(), target.numpy()
     print(latent_vecs.shape, target.shape)
-    latent_vecs_reduced = TSNE(n_components=2, random_state=0).fit_transform(latent_vecs[:1000])
+    latent_vecs_reduced = TSNE(n_components=2, random_state=0).fit_transform(latent_vecs)
     # latent_vecs_reduced = PCA(n_components=2).fit_transform(latent_vecs)
 
     plt.scatter(latent_vecs_reduced[:, 0], latent_vecs_reduced[:, 1],
-                c=target[:1000], cmap='jet')
+                c=target, cmap='jet')
     plt.colorbar()
     plt.show()
 

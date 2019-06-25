@@ -20,7 +20,7 @@ class Angular_mc_loss(nn.Module):
         f_apn = f_apn * mask
         loss = torch.mean(torch.logsumexp(f_apn, dim=1))
         if with_npair:
-            loss_npair = n_pair_mc_loss(f, f_p)
+            loss_npair = self.n_pair_mc_loss(f, f_p)
             loss = loss_npair + lamb*loss
         # Preventing overflow
         # with torch.no_grad():
@@ -31,6 +31,7 @@ class Angular_mc_loss(nn.Module):
         # x = torch.log(torch.exp(-t) + torch.sum(x, 2))
         # loss = torch.mean(t + x)
         return loss
+
 
     def n_pair_mc_loss(f, f_p):
         n_pairs = len(f)
