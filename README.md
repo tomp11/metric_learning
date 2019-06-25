@@ -1,6 +1,6 @@
 # Metric Learning ([npair loss](http://www.nec-labs.com/uploads/images/Department-Images/MediaAnalytics/papers/nips16_npairmetriclearning.pdf) & [angular loss](https://arxiv.org/pdf/1708.01682.pdf)) on mnist and Visualizing by t_SNE
 ---
-|n_pair_loss|n_pair_angular_loss|
+|n_pair_loss|n_pair_angular_loss|  
 |![](images/n_pair_loss_S.png)|![](images/n_pair_angular_loss_S.png)|  
 
 
