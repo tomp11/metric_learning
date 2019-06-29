@@ -44,7 +44,7 @@ def train(epoch):
         optimizer.step()
         if batch_idx % 100 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(anchor_imgs), len(train_loader.dataset),
+                epoch, batch_idx * len(anchor_imgs), len(train_loader) * len(anchor_imgs),
                 100. * batch_idx / len(train_loader), loss.item()))
 
 def save(epoch):

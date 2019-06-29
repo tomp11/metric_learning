@@ -32,7 +32,7 @@ class Angular_mc_loss(nn.Module):
         # loss = torch.mean(t + x)
         return loss
 
-
+    @staticmethod
     def n_pair_mc_loss(f, f_p):
         n_pairs = len(f)
         term1 = torch.matmul(f, torch.transpose(f_p, 0, 1))
