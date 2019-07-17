@@ -11,4 +11,4 @@ run from top on terminal
 `pip install -r requirements.txt`  
 `python src/utils/mnist_to_img.py` -- return mnist data separated by label  
 `python src/n_pair_train.py` -- save model to `src/checkpoints/checkpoint.pth.tar`and`logs/angular_0.001/*`  
-`python t_SNE.py` -- show t_SNE  
+`python src/t_SNE.py` -- show t_SNE  
