@@ -6,6 +6,11 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import numpy as np
 
+
+def n_pair_dataset(data_path, transform):
+    image_dataset = datasets.ImageFolder(data_path, transform)
+    return image_dataset
+
 def default_image_loader(path):
     return Image.open(path)
 

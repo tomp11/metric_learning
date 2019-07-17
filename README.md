@@ -2,14 +2,13 @@
 
 n_pair_loss|n_pair_angular_loss
 ---|---
-![](images/n_pair_loss_S.png)|![](images/n_pair_angular_loss_S.png)
+![](img/n_pair_loss_S.png)|![](img/n_pair_angular_loss_S.png)
 
 
 
 ## Usage
 run from top on terminal   
 `pip install -r requirements.txt`  
-`python mnist_to_img.py` -- return mnist data separated by label  
-`python Sampling.py` -- return `image_path.txt`and`n_pair_index.txt`  
-`python n_pair_train.py` -- save model to `checkpoints\checkpoint.pth.tar`  
+`python src/utils/mnist_to_img.py` -- return mnist data separated by label  
+`python src/n_pair_train.py` -- save model to `src/checkpoints\checkpoint.pth.tar`and`logs/angular_0.001/*`  
 `python t_SNE.py` -- show t_SNE  

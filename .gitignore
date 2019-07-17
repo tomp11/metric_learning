@@ -1,11 +1,10 @@
 .idea
 __pycache__
 checkpoints
-data
-mnist
-mnist_280
-mnist_test
+datasets
 venv
-n_pair_index.txt
-n_plus_1_index_text.txt
-image_path.txt
+logs
+n_plus_1_train.py
+Sampling.py
+dousa.py
+Models.py

@@ -11,16 +11,21 @@ class Angular_mc_loss(nn.Module):
             alpha = np.deg2rad(alpha)
         self.sq_tan_alpha = np.tan(alpha) ** 2
 
-    def forward(self, f, f_p, with_npair=True, lamb=2):
-        n_pairs = len(f)
+    def forward(self, embeddings, target, with_npair=True, lamb=2):
+        n_pairs = self.get_n_pairs(target)
+        n_pairs = n_pairs.cuda()
+        f = embeddings[n_pairs[:, 0]]
+        f_p = embeddings[n_pairs[:, 1]]
+        print(f, f_p)
         term1 = 4 * self.sq_tan_alpha * torch.matmul(f + f_p, torch.transpose(f_p, 0, 1))
         term2 = 2 * (1 + self.sq_tan_alpha) * torch.sum(f * f_p, keepdim=True, dim=1)
         f_apn = term1 - term2
-        mask = torch.ones_like(f_apn) - torch.eye(n_pairs).cuda()
+        mask = torch.ones_like(f_apn) - torch.eye(len(f)).cuda()
         f_apn = f_apn * mask
         loss = torch.mean(torch.logsumexp(f_apn, dim=1))
         if with_npair:
             loss_npair = self.n_pair_mc_loss(f, f_p)
+            print(loss, loss_npair)
             loss = loss_npair + lamb*loss
         # Preventing overflow
         # with torch.no_grad():
@@ -31,6 +36,25 @@ class Angular_mc_loss(nn.Module):
         # x = torch.log(torch.exp(-t) + torch.sum(x, 2))
         # loss = torch.mean(t + x)
         return loss
+
+    @staticmethod
+    def get_n_pairs(labels):
+        """
+        Get index of n-pairs and n-negatives
+        :param labels: label vector of mini-batch
+        :return: A tuple of n_pairs (n, 2)
+        """
+        labels = labels.cpu().data.numpy()
+        n_pairs = []
+        for label in set(labels):
+            label_mask = (labels == label)
+            label_indices = np.where(label_mask)[0]
+            if len(label_indices) < 2:
+                continue
+            anchor, positive = np.random.choice(label_indices, 2, replace=False)
+            n_pairs.append([anchor, positive])
+        n_pairs = np.array(n_pairs)
+        return torch.LongTensor(n_pairs)
 
     @staticmethod
     def n_pair_mc_loss(f, f_p):
