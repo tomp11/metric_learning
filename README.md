@@ -10,5 +10,5 @@ n_pair_loss|n_pair_angular_loss
 run from top on terminal   
 `pip install -r requirements.txt`  
 `python src/utils/mnist_to_img.py` -- return mnist data separated by label  
-`python src/n_pair_train.py` -- save model to `src/checkpoints\checkpoint.pth.tar`and`logs/angular_0.001/*`  
+`python src/n_pair_train.py` -- save model to `src/checkpoints/checkpoint.pth.tar`and`logs/angular_0.001/*`  
 `python t_SNE.py` -- show t_SNE  
