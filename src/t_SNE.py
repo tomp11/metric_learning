@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import numpy as np
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
@@ -10,30 +11,33 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from sklearn.decomposition import PCA
 
-from Nets import Cnn_32
-from Models import Test_net
+from models.CNN_3 import CNN_3
+
 
 
 def test(t_SNE=True):
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    traindata_path = os.path.join(base_path, "datasets", "mnist_test")
+    testdata_path = os.path.join(base_path, "datasets", "mnist_test")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    test_set = datasets.MNIST(root=traindata_path, train=False, download=True, transform=transforms.Compose([
+    test_set = datasets.MNIST(root=testdata_path, train=False, download=True, transform=transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ]))
 
-    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=5000, shuffle=True)
-    #1バッチ分だけ取り出し
-    data, target = iter(test_loader).next() # (5000,1,28,28), (5000)
+    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=5000, shuffle=False)
+    # 1バッチ分だけ取り出し
+    # testセット10000の内後半の5000取り出し
+    data_iter = iter(test_loader)
+    _, _ = data_iter.next()
+    data, target = data_iter.next() # (5000,1,28,28), (5000)
     target = torch.LongTensor(target)
     print(data.size(), target.size())
     # data = torch.stack([test_set[i][0] for i in range(5000)]) # (5000,1,28,28)
     # target = torch.Tensor([test_set[i][1] for i in range(5000)]) # (5000)
 
-    net = Cnn_32()
-    model = Test_net(net).to(device)
+    net = CNN_3()
+    model = net.to(device)
     model.load_state_dict(torch.load('./checkpoints/checkpoint.pth.tar'))
     classes = ["0","1","2","3","4","5","6","7","8","9"]
 

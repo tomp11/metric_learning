@@ -19,22 +19,24 @@ from models.CNN_3 import CNN_3
 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # "metric_test"
 
 traindata_path = os.path.join(base_path, "datasets", "mnist") # "metric_test\datasets\mnist"
-
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
     ])
-# val_dataset =
+
+# val_dataset = datasets.MNIST(root=testdata_path, train=False, download=True, transform=transforms)
 
 #ImageFolderのdefaultloaderだとmnistなのに3,28,28だったのでpillowのloader使う
 def image_loader(path):
     return Image.open(path)
-train_dataset = datasets.ImageFolder(traindata_path, transform, loader=image_loader)
-# train_dataset = N_Pair_ImageDataset("./mnist", "image_path.txt", "n_pair_index.txt", train_transform)
-# train_batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_samples=64, num_workers=4)
-train_batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_samples=8)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=train_batch_sampler)
+datasets = datasets.ImageFolder(traindata_path, transform, loader=image_loader)
 
+train_size = len(datasets)*0.9
+train_dataset = Subset(trainval_dataset, list(range(train_size)))
+val_dataset = Subset(trainval_dataset, list(range(train_size, len(datasets))))
+batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_samples=8)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=batch_sampler)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_sampler=batch_sampler)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = CNN_3().to(device)
@@ -45,11 +47,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 log_base_path = os.path.join(base_path, "logs")
 dt = datetime.datetime.now()
 model_id = len(glob.glob(os.path.join(log_base_path, "{}{}{}*".format(dt.year, dt.month, dt.day))))
-if model_id < 10:
-    model_id = "0" + str(model_id)
-else:
-    model_id = str(model_id)
-log_dir_name = "{}{}{}_{}_{}".format(dt.year, dt.month, dt.day, model_id, model.__class__.__name__)
+log_dir_name = "{}{}{}_{}_{}".format(dt.year, dt.month, dt.day, '{0:02d}'.format(model_id), model.__class__.__name__)
 log_path = os.path.join(log_base_path, log_dir_name)
 writer = SummaryWriter(log_dir=log_path)
 
@@ -72,12 +70,15 @@ def train(epoch):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        writer.add_scalar("loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx))
+        writer.add_scalar("loss/train_loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx))
         if batch_idx % 10 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch,
                 batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader),
                 loss.item()))
+def val(epoch):
+    model.eval()
+    with torch.no_grad():
 
 def save(epoch):
     filename = "checkpoint.pth.tar"

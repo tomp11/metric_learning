@@ -1,5 +1,4 @@
 absl-py==0.7.1
-chainer==6.1.0
 cycler==0.10.0
 filelock==3.0.12
 future==0.17.1
