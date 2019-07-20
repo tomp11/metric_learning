@@ -11,6 +11,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torchvision.models as models
 from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data.dataset import Subset
 
 from modules.Loss import Angular_mc_loss, Angular_mc_loss, N_plus_1_Loss, n_pair_mc_loss
 from modules.Sampler import BalancedBatchSampler
@@ -31,13 +32,19 @@ def image_loader(path):
     return Image.open(path)
 datasets = datasets.ImageFolder(traindata_path, transform, loader=image_loader)
 
-train_size = len(datasets)*0.9
-train_dataset = Subset(trainval_dataset, list(range(train_size)))
-val_dataset = Subset(trainval_dataset, list(range(train_size, len(datasets))))
-batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_samples=8)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=batch_sampler)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_sampler=batch_sampler)
-
+train_size = len(datasets)*9//10
+val_size = len(datasets) - train_size
+print(train_size, val_size)
+train_dataset, val_dataset = torch.utils.data.random_split(datasets, [train_size, val_size])
+# subsetはスライスでとるのでimagefolderはラベル順に取り込んでいるからラベルが偏る
+# random_splitはランダム
+# train_dataset = Subset(datasets, list(range(train_size)))
+# val_dataset = Subset(datasets, list(range(train_size, len(datasets))))
+train_batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_samples=8)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=train_batch_sampler)
+val_batch_sampler = BalancedBatchSampler(val_dataset, n_classes=10, n_samples=8)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_sampler=val_batch_sampler)
+print(len(train_loader), len(val_loader))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = CNN_3().to(device)
 criterion = Angular_mc_loss()
@@ -61,8 +68,8 @@ def adjust_learning_rate(optimizer, epoch):
         param_group['lr'] = lr
 
 def train(epoch):
-    model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
+        model.train()
         optimizer.zero_grad()
         data, target = data.cuda(), target.cuda()
         embedded = model(data)
@@ -71,14 +78,25 @@ def train(epoch):
         loss.backward()
         optimizer.step()
         writer.add_scalar("loss/train_loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx))
-        if batch_idx % 10 == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+        if batch_idx % 20 == 0:
+            #validation
+            model.eval()
+            with torch.no_grad():
+                val_losses = 0.0
+                for idx, (data, target) in enumerate(val_loader):
+                    data, target = data.cuda(), target.cuda()
+                    embedded = model(data)
+                    val_loss = criterion(embedded, target)
+                    val_losses += val_loss
+            mean_val_loss = val_losses/len(val_loader)
+            writer.add_scalar("loss/val_loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx))
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\ttrain_loss:{:.4f}\tval_loss:{:.4f}'.format(
                 epoch,
                 batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader),
-                loss.item()))
-def val(epoch):
-    model.eval()
-    with torch.no_grad():
+                loss.item(), val_loss))
+
+
+
 
 def save(epoch):
     filename = "checkpoint.pth.tar"
