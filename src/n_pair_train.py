@@ -1,4 +1,6 @@
 import os
+import datetime
+import glob
 from PIL import Image
 import torch
 import torch.nn as nn
@@ -12,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from modules.Loss import Angular_mc_loss, Angular_mc_loss, N_plus_1_Loss, n_pair_mc_loss
 from modules.Sampler import BalancedBatchSampler
-from models.cnn32 import Cnn_32
+from models.CNN_3 import CNN_3
 
 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # "metric_test"
 
@@ -35,16 +37,23 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=train_ba
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = Cnn_32().to(device)
+model = CNN_3().to(device)
 criterion = Angular_mc_loss()
-optimizer = optim.SGD(model.parameters(), lr=0.0035, momentum=0.9)
-# optimizer = optim.SGD(model.parameters(), lr=0.1)
+optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
 
-log_path = os.path.join(base_path, "logs", "angular_0.001")
+log_base_path = os.path.join(base_path, "logs")
+dt = datetime.datetime.now()
+model_id = len(glob.glob(os.path.join(log_base_path, "{}{}{}*".format(dt.year, dt.month, dt.day))))
+if model_id < 10:
+    model_id = "0" + str(model_id)
+else:
+    model_id = str(model_id)
+log_dir_name = "{}{}{}_{}_{}".format(dt.year, dt.month, dt.day, model_id, model.__class__.__name__)
+log_path = os.path.join(log_base_path, log_dir_name)
 writer = SummaryWriter(log_dir=log_path)
 
-epochs = 3
+epochs = 30
 
 
 def adjust_learning_rate(optimizer, epoch):
@@ -56,11 +65,7 @@ def adjust_learning_rate(optimizer, epoch):
 def train(epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
-        # print(data.size())
         optimizer.zero_grad()
-        # print(anchor_imgs.size())
-        # anchor_imgs, positive_imgs = torch.squeeze(anchor_imgs, dim=0), torch.squeeze(positive_imgs, dim=0)
-        # anchor_imgs, positive_imgs = anchor_imgs.cuda(), positive_imgs.cuda()
         data, target = data.cuda(), target.cuda()
         embedded = model(data)
         loss = criterion(embedded, target)
@@ -73,6 +78,7 @@ def train(epoch):
                 epoch,
                 batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader),
                 loss.item()))
+
 def save(epoch):
     filename = "checkpoint.pth.tar"
     directory = "checkpoints"
@@ -81,6 +87,8 @@ def save(epoch):
     filename = os.path.join(directory, filename)
     torch.save(model.state_dict(), filename)
 
-for epoch in range(1, epochs+1):
-    train(epoch)
-    save(epoch)
+
+if __name__ == "__main__":
+    for epoch in range(1, epochs+1):
+        train(epoch)
+        save(epoch)

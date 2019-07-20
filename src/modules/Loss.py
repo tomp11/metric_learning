@@ -16,7 +16,7 @@ class Angular_mc_loss(nn.Module):
         n_pairs = n_pairs.cuda()
         f = embeddings[n_pairs[:, 0]]
         f_p = embeddings[n_pairs[:, 1]]
-        print(f, f_p)
+        # print(f, f_p)
         term1 = 4 * self.sq_tan_alpha * torch.matmul(f + f_p, torch.transpose(f_p, 0, 1))
         term2 = 2 * (1 + self.sq_tan_alpha) * torch.sum(f * f_p, keepdim=True, dim=1)
         f_apn = term1 - term2
@@ -25,7 +25,7 @@ class Angular_mc_loss(nn.Module):
         loss = torch.mean(torch.logsumexp(f_apn, dim=1))
         if with_npair:
             loss_npair = self.n_pair_mc_loss(f, f_p)
-            print(loss, loss_npair)
+            # print(loss, loss_npair)
             loss = loss_npair + lamb*loss
         # Preventing overflow
         # with torch.no_grad():

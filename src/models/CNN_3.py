@@ -2,9 +2,9 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import torch.nn.functional as F
 
-class Cnn_32(nn.Module):
+class CNN_3(nn.Module):
     def __init__(self):
-        super(Cnn_32, self).__init__()
+        super(CNN_3, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 3) # 28x28x32 -> 26x26x32
         self.conv2 = nn.Conv2d(32, 64, 3) # 26x26x64 -> 24x24x64
         self.pool = nn.MaxPool2d(2, 2) # 24x24x64 -> 12x12x64
