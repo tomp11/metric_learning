@@ -34,7 +34,6 @@ datasets = datasets.ImageFolder(traindata_path, transform, loader=image_loader)
 
 train_size = len(datasets)*9//10
 val_size = len(datasets) - train_size
-print(train_size, val_size)
 train_dataset, val_dataset = torch.utils.data.random_split(datasets, [train_size, val_size])
 # subsetはスライスでとるのでimagefolderはラベル順に取り込んでいるからラベルが偏る
 # random_splitはランダム
@@ -44,7 +43,6 @@ train_batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_sample
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=train_batch_sampler)
 val_batch_sampler = BalancedBatchSampler(val_dataset, n_classes=10, n_samples=8)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_sampler=val_batch_sampler)
-print(len(train_loader), len(val_loader))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = CNN_3().to(device)
 criterion = Angular_mc_loss()
@@ -54,11 +52,11 @@ optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 log_base_path = os.path.join(base_path, "logs")
 dt = datetime.datetime.now()
 model_id = len(glob.glob(os.path.join(log_base_path, "{}{}{}*".format(dt.year, dt.month, dt.day))))
-log_dir_name = "{}{}{}_{}_{}".format(dt.year, dt.month, dt.day, '{0:02d}'.format(model_id), model.__class__.__name__)
+log_dir_name = "{}{:02}{:02}_{:02}_{}".format(dt.year, dt.month, dt.day, model_id, model.__class__.__name__)
 log_path = os.path.join(log_base_path, log_dir_name)
 writer = SummaryWriter(log_dir=log_path)
 
-epochs = 30
+epochs = 20
 
 
 def adjust_learning_rate(optimizer, epoch):
@@ -77,7 +75,8 @@ def train(epoch):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        writer.add_scalar("loss/train_loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx))
+        writer.add_scalar("loss/train_loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx)) # 675*e+i
+
         if batch_idx % 20 == 0:
             #validation
             model.eval()
@@ -90,7 +89,7 @@ def train(epoch):
                     val_losses += val_loss
             mean_val_loss = val_losses/len(val_loader)
             writer.add_scalar("loss/val_loss", loss.item(), (len(train_loader)*(epoch-1)+batch_idx))
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\ttrain_loss:{:.4f}\tval_loss:{:.4f}'.format(
+            print('Train Epoch: {:>3} [{:>5}/{:>5} ({:>3.0f}%)]\ttrain_loss: {:>2.4f}\tval_loss: {:>2.4f}'.format(
                 epoch,
                 batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader),
                 loss.item(), val_loss))
@@ -99,12 +98,14 @@ def train(epoch):
 
 
 def save(epoch):
-    filename = "checkpoint.pth.tar"
-    directory = "checkpoints"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    filename = os.path.join(directory, filename)
-    torch.save(model.state_dict(), filename)
+    checkpoint_path = os.path.join(base_path, "checkpoints")
+    save_file = "checkpoint.pth.tar"
+    if not os.path.exists(checkpoint_path):
+        os.makedirs(checkpoint_path)
+    if not os.path.exists(os.path.join(checkpoint_path, log_dir_name)):
+        os.makedirs(os.path.join(checkpoint_path, log_dir_name))
+    save_path = os.path.join(checkpoint_path, log_dir_name, save_file)
+    torch.save(model.state_dict(), save_path)
 
 
 if __name__ == "__main__":
