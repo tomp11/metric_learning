@@ -43,6 +43,7 @@ train_batch_sampler = BalancedBatchSampler(train_dataset, n_classes=10, n_sample
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_sampler=train_batch_sampler)
 val_batch_sampler = BalancedBatchSampler(val_dataset, n_classes=10, n_samples=8)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_sampler=val_batch_sampler)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = CNN_3().to(device)
 criterion = Angular_mc_loss()

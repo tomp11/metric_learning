@@ -33,9 +33,9 @@ def save(data, target, savepath, index):
     data.save(filename)
     print(os.path.join(str(target), "train{0:04d}.png".format(index)))
 
-# for i in range(len(mnist_train)*9//10):
-#     data, target = mnist_train[i]
-#     save(data, target, metric_mnist_train_path, i)
+for i in range(len(mnist_train)*9//10):
+    data, target = mnist_train[i]
+    save(data, target, metric_mnist_train_path, i)
 for i in range(len(mnist_train)*9//10, len(mnist_train)):
     data, target = mnist_train[i]
     save(data, target, metric_mnist_val_path, i)
