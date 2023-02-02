@@ -22,4 +22,4 @@ torchvision==0.3.0
 tqdm==4.32.2
 typing==3.6.6
 typing-extensions==3.6.6
-Werkzeug==0.15.4
+Werkzeug==0.15.5
